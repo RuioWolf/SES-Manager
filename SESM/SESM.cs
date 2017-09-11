@@ -223,7 +223,7 @@ namespace SESM
 			}
 			else
 			{
-				EditValve(eservername,item);
+				EditValve(eservername, item);
 			}
 			srvDoc.Save(srvxml);
 #endif
@@ -232,7 +232,7 @@ namespace SESM
 		public static void EditValve(string eservername, string item)
 		{
 			XmlElement xe = (XmlElement) GetSrvNodeByName(eservername);
-			if (xe.Attributes.Count > 1)
+			if (item != "name")
 			{
 				xe.RemoveAttribute(item);
 			}
@@ -287,14 +287,23 @@ namespace SESM
 #endif
 		}
 
-		public static void AddServer(string aservername, string item, string valve)
+		public static XmlNode AddServer(string aservername)
 		{
+			XmlNode srvroot = srvDoc.SelectSingleNode("ServerConfig");
+			XmlElement xe=srvDoc.CreateElement("Server");
+			xe.SetAttribute("name", aservername);
+			if (srvroot != null)
+				srvroot.AppendChild(xe);
+			srvDoc.Save(srvxml);
+			XmlNode result = (XmlNode) xe;
+			return result;
 		}
 
 		public static XmlNode GetSrvNodeByName(string servername)
 		{
 			XmlNode result = null;
 			XmlNode servers = srvDoc.DocumentElement;
+			bool exist = false;
 
 			try
 			{
@@ -307,9 +316,14 @@ namespace SESM
 								if (att.Value == servername)
 								{
 									result = node;
+									exist = true;
 								}
 							}
 					}
+				if (!exist)
+				{
+					result= AddServer(servername);
+				}
 				return result;
 			}
 			catch (Exception e)
