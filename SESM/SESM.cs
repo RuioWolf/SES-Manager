@@ -1,12 +1,11 @@
-﻿using System;
+﻿#define mB
+
+using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Xml;
 using System.Xml.Linq;
 using System.IO;
-using System.Runtime.CompilerServices;
-using System.Runtime.Remoting.Messaging;
 
 namespace SESM
 {
@@ -47,12 +46,6 @@ namespace SESM
 
 		public static void CreatConfig(string type)
 		{
-			//			XmlDeclaration xmlDec = cfgDoc.CreateXmlDeclaration("1.0", "utf-8", null);
-			//			XmlElement sesmConfig = cfgDoc.CreateElement("SESMConfig");
-			//			
-			//			cfgDoc.AppendChild(xmlDec);
-			//			cfgDoc.AppendChild(sesmConfig);
-
 			XElement xElement;
 			XmlWriter xmlWriter;
 			XmlWriterSettings settings = new XmlWriterSettings
@@ -65,7 +58,7 @@ namespace SESM
 				xElement = new XElement(
 					new XElement("SESMConfig",
 						new XElement("SteamCMD",
-							new XAttribute("path", "steamcmd\\steamcmd.exe"),
+							new XAttribute("path", "SteamCMD\\steamcmd.exe"),
 							new XAttribute("login", "anonymous")
 						)
 					)
@@ -90,7 +83,7 @@ namespace SESM
 		public static bool CheckXml()
 		{
 			XmlNodeList nodeList = srvDoc.SelectNodes("ServerConfig/*");
-			if (nodeList.Count > 0)
+			if (nodeList != null && nodeList.Count > 0)
 			{
 				return true;
 			}
@@ -100,8 +93,8 @@ namespace SESM
 		public static List<string> QueryList()
 		{
 			List<string> list = new List<string>();
-
 			XmlNode servers = srvDoc.DocumentElement;
+
 			if (servers != null)
 			{
 				foreach (XmlNode node in servers)
@@ -121,9 +114,10 @@ namespace SESM
 
 		public static string QuerySingleItem(string qservername, string item)
 		{
-			XmlNode servers = srvDoc.DocumentElement;
 			string result = string.Empty;
 
+#if !mB
+			XmlNode servers = srvDoc.DocumentElement;
 			try
 			{
 				foreach (XmlNode node in servers.ChildNodes)
@@ -143,11 +137,19 @@ namespace SESM
 				Logger.Log(e.Message);
 				return null;
 			}
+#else
+			var xmlAttributeCollection = GetSrvNodeByName(qservername).Attributes;
+			if (xmlAttributeCollection != null)
+				result = xmlAttributeCollection.GetNamedItem(item).Value;
+			return result;
+#endif
+
 		}
 
 		public static List<string> Query(string qservername)
 		{
 			List<string> list = new List<string>();
+#if !mB
 			XmlNode servers = srvDoc.DocumentElement;
 
 			try
@@ -161,7 +163,7 @@ namespace SESM
 							foreach (XmlAttribute valve in node.Attributes)
 							{
 								list.Add(valve.Value);
-//								list.Add(valve.OuterXml);
+								list.Add(valve.OuterXml);
 							}
 						}
 					}
@@ -173,10 +175,22 @@ namespace SESM
 				Logger.Log(e.Message);
 				return null;
 			}
+			
+#else
+			var xmlAttributeCollection = GetSrvNodeByName(qservername).Attributes;
+			if (xmlAttributeCollection != null)
+				foreach (XmlAttribute att in xmlAttributeCollection)
+				{
+					list.Add(att.Value);
+				}
+			return list;
+#endif
+
 		}
 
 		public static void EditValve(string eservername, string item, string valve)
 		{
+#if !mB
 			XmlNode servers = srvDoc.DocumentElement;
 
 			try
@@ -202,6 +216,94 @@ namespace SESM
 			catch (NullReferenceException e)
 			{
 				Logger.Log(e.Message);
+			}
+#else
+			XmlAttributeCollection xmlAttributeCollection = GetSrvNodeByName(eservername).Attributes;
+			if (xmlAttributeCollection != null)
+				foreach (XmlAttribute name in xmlAttributeCollection)
+				{
+					if (name.Name == item)
+					{
+						name.Value = valve;
+					}
+				}
+#endif
+		}
+
+		public static void DeleteServer(string dservername)
+		{
+#if !mB
+			XmlNode servers = srvDoc.DocumentElement;
+			try
+			{
+				if (servers != null)
+					foreach (XmlNode node in servers.ChildNodes)
+					{
+						if (node.Attributes != null)
+							foreach (XmlAttribute att in node.Attributes)
+							{
+								if (att.Value == dservername)
+								{
+									srvDoc.RemoveChild(node);
+								}
+							}
+					}
+				srvDoc.Save(srvxml);
+			}
+			catch (NullReferenceException e)
+			{
+				Logger.Log(e.Message);
+			}
+#else
+			XmlNode srvroot = srvDoc.SelectSingleNode("ServerConfig");
+			try
+			{
+				XmlNode selectSingleNode = srvDoc.SelectSingleNode("ServerConfig");
+				if (selectSingleNode != null)
+				{
+					XmlNodeList srv = selectSingleNode.ChildNodes;
+				}
+				if (srvroot != null)
+					srvroot.RemoveChild(GetSrvNodeByName(dservername));
+			}
+			catch (NullReferenceException e)
+			{
+				Logger.Log(e.Message);
+			}
+			srvDoc.Save(srvxml);
+#endif
+		}
+
+		public static void AddServer(List<string> aserver)
+		{
+		}
+
+		public static XmlNode GetSrvNodeByName(string servername)
+		{
+			XmlNode result = null;
+			XmlNode servers = srvDoc.DocumentElement;
+
+			try
+			{
+				if (servers != null)
+					foreach (XmlNode node in servers.ChildNodes)
+					{
+						if (node.Attributes != null)
+							foreach (XmlAttribute att in node.Attributes)
+							{
+								if (att.Value == servername)
+								{
+									Console.WriteLine("success");
+									result = node;
+								}
+							}
+					}
+				return result;
+			}
+			catch (Exception e)
+			{
+				Logger.Log(e.Message);
+				return null;
 			}
 		}
 	}
