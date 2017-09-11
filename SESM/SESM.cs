@@ -5,6 +5,8 @@ using System.Text;
 using System.Xml;
 using System.Xml.Linq;
 using System.IO;
+using System.Runtime.CompilerServices;
+using System.Runtime.Remoting.Messaging;
 
 namespace SESM
 {
@@ -61,20 +63,19 @@ namespace SESM
 			if (type == "cfg")
 			{
 				xElement = new XElement(
-					new XElement("SESMConfig")
+					new XElement("SESMConfig",
+						new XElement("SteamCMD",
+							new XAttribute("path", "steamcmd\\steamcmd.exe"),
+							new XAttribute("login", "anonymous")
+						)
+					)
 				);
 				xmlWriter = XmlWriter.Create(cfgxml, settings);
 			}
 			else if (type == "srv")
 			{
 				xElement = new XElement(
-					new XElement("ServerConfig",
-						new XElement("Server", new XAttribute("name", "Server1"), new XAttribute("dir", "c:\\"),
-							new XElement("IP", "1.2.3.4"),
-							new XElement("Port", "27015")
-						)
-					)
-				);
+					new XElement("ServerConfig"));
 				xmlWriter = XmlWriter.Create(srvxml, settings);
 			}
 			else
@@ -88,17 +89,7 @@ namespace SESM
 
 		public static bool CheckXml()
 		{
-			//			try
-			//			{
-			//				cfgDoc.Load(cfgxml);
-			//			}
-			//			catch (Exception e)
-			//			{
-			//				Logger.Log(e.Message);
-			//				return false;
-			//			}
-			//XmlNodeList nodeList = cfgDoc.GetElementsByTagName("IP");
-			XmlNodeList nodeList = cfgDoc.SelectNodes("SESMConfig/*");
+			XmlNodeList nodeList = srvDoc.SelectNodes("ServerConfig/*");
 			if (nodeList.Count > 0)
 			{
 				return true;
@@ -109,17 +100,16 @@ namespace SESM
 		public static List<string> QueryList()
 		{
 			List<string> list = new List<string>();
-			StringBuilder stringBuilder = new StringBuilder();
 
-			XmlNode servername = cfgDoc.DocumentElement;
-			if (servername != null)
+			XmlNode servers = srvDoc.DocumentElement;
+			if (servers != null)
 			{
-				foreach (XmlNode node in servername)
+				foreach (XmlNode node in servers)
 				{
-					foreach (XmlAttribute xa in node.Attributes)
-					{
-						list.Add(xa.Value);
-					}
+					if (node.Attributes != null)
+						list.Add(node.Attributes.GetNamedItem("name").OuterXml);
+					else
+						return null;
 				}
 				return list;
 			}
@@ -131,39 +121,26 @@ namespace SESM
 
 		public static string QuerySingleItem(string qservername, string item)
 		{
-			//			XmlNode node = cfgDoc.SelectSingleNode("ServerConfig/" + servername + "/" + item);
-			//			if (node != null)
-			//			{
-			//				return node.InnerText;
-			//			}
-			//			else
-			//			{
-			//				return null;
-			//			}
-			XmlNode servername = cfgDoc.DocumentElement;
-			if (servername != null)
+			XmlNode servers = srvDoc.DocumentElement;
+			string result = string.Empty;
+
+			try
 			{
-				string result = string.Empty;
-				foreach (XmlNode node in servername)
+				foreach (XmlNode node in servers.ChildNodes)
 				{
-					foreach (XmlAttribute xa in node.Attributes)
+					foreach (XmlAttribute att in node.Attributes)
 					{
-						if (xa.Value == qservername)
+						if (att.Value == qservername)
 						{
-							foreach (XmlNode res in node.ChildNodes)
-							{
-								if (res.Name == item)
-								{
-									result = res.InnerText;
-								}
-							}
+							result = node.Attributes.GetNamedItem(item).Value;
 						}
 					}
 				}
 				return result;
 			}
-			else
+			catch (NullReferenceException e)
 			{
+				Logger.Log(e.Message);
 				return null;
 			}
 		}
@@ -171,57 +148,68 @@ namespace SESM
 		public static List<string> Query(string qservername)
 		{
 			List<string> list = new List<string>();
-			XmlNodeList lnode = cfgDoc.SelectNodes("ServerConfig/*");
+			XmlNode servers = srvDoc.DocumentElement;
 
-			if (lnode != null)
+			try
 			{
-				foreach (XmlElement sname in lnode)
+				foreach (XmlNode node in servers.ChildNodes)
 				{
-					if (sname.GetAttribute("name") == qservername)
+					foreach (XmlAttribute att in node.Attributes)
 					{
-						foreach (XmlNode item in sname.ChildNodes)
+						if (att.Value == qservername)
 						{
-							list.Add(item.InnerText);
+							foreach (XmlAttribute valve in node.Attributes)
+							{
+								list.Add(valve.Value);
+//								list.Add(valve.OuterXml);
+							}
 						}
 					}
 				}
 				return list;
 			}
-			else
+			catch (NullReferenceException e)
 			{
+				Logger.Log(e.Message);
 				return null;
 			}
 		}
 
-		public static void EditValve(string servername, string item, string valve)
+		public static void EditValve(string eservername, string item, string valve)
 		{
-			XmlNode node = cfgDoc.SelectSingleNode("Server/" + servername + "/" + item);
-			node.InnerText = valve;
-			cfgDoc.Save(cfgxml);
-		}
+			XmlNode servers = srvDoc.DocumentElement;
 
-		public static void EditName(string oldname, string newname)
-		{
-			XmlNode node = cfgDoc.DocumentElement;
-			foreach (XmlNode oldNode in node.ChildNodes)
+			try
 			{
-				if (oldNode.Name == oldname)
+				foreach (XmlNode node in servers.ChildNodes)
 				{
-					XmlNode n = oldNode;
+					foreach (XmlAttribute att in node.Attributes)
+					{
+						if (att.Value == eservername)
+						{
+							foreach (XmlAttribute name in node.Attributes)
+							{
+								if (name.Name == item)
+								{
+									name.Value = valve;
+								}
+							}
+						}
+					}
 				}
+				srvDoc.Save(srvxml);
 			}
-		}
-
-		private static void ErrorHandler(string arg)
-		{
-			Logger.Log(arg);
+			catch (NullReferenceException e)
+			{
+				Logger.Log(e.Message);
+			}
 		}
 	}
 
 	public class Logger
 	{
 		static StreamWriter sw;
-		static string text;
+		static string text = string.Empty;
 		static string logDir = Environment.CurrentDirectory + "\\Log";
 		static string logFile = logDir + "\\" + DateTime.Now.ToString("yyyy-MM-dd") + ".log";
 		static string cOutput = logDir + "\\" + DateTime.Now.ToString("yyyy-MM-dd") + ".txt";
