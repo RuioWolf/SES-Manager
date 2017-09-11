@@ -143,7 +143,6 @@ namespace SESM
 				result = xmlAttributeCollection.GetNamedItem(item).Value;
 			return result;
 #endif
-
 		}
 
 		public static List<string> Query(string qservername)
@@ -185,7 +184,6 @@ namespace SESM
 				}
 			return list;
 #endif
-
 		}
 
 		public static void EditValve(string eservername, string item, string valve)
@@ -218,16 +216,31 @@ namespace SESM
 				Logger.Log(e.Message);
 			}
 #else
-			XmlAttributeCollection xmlAttributeCollection = GetSrvNodeByName(eservername).Attributes;
-			if (xmlAttributeCollection != null)
-				foreach (XmlAttribute name in xmlAttributeCollection)
-				{
-					if (name.Name == item)
-					{
-						name.Value = valve;
-					}
-				}
+			XmlElement xe = (XmlElement) GetSrvNodeByName(eservername);
+			if (valve != null)
+			{
+				xe.SetAttribute(item, valve);
+			}
+			else
+			{
+				EditValve(eservername,item);
+			}
+			srvDoc.Save(srvxml);
 #endif
+		}
+
+		public static void EditValve(string eservername, string item)
+		{
+			XmlElement xe = (XmlElement) GetSrvNodeByName(eservername);
+			if (xe.Attributes.Count > 1)
+			{
+				xe.RemoveAttribute(item);
+			}
+			else
+			{
+				DeleteServer(eservername);
+			}
+			srvDoc.Save(srvxml);
 		}
 
 		public static void DeleteServer(string dservername)
@@ -274,7 +287,7 @@ namespace SESM
 #endif
 		}
 
-		public static void AddServer(List<string> aserver)
+		public static void AddServer(string aservername, string item, string valve)
 		{
 		}
 
@@ -293,7 +306,6 @@ namespace SESM
 							{
 								if (att.Value == servername)
 								{
-									Console.WriteLine("success");
 									result = node;
 								}
 							}
