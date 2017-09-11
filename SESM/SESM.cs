@@ -225,14 +225,7 @@ namespace SESM
 #else
 			XmlElement xe = (XmlElement) GetSrvNodeByName(eservername);
 
-			if (valve != null)
-			{
-				xe.SetAttribute(item, valve);
-			}
-			else
-			{
-				EditValve(eservername, item);
-			}
+			xe.SetAttribute(item, valve);
 			srvDoc.Save(srvxml);
 #endif
 		}
