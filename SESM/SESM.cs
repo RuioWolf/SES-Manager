@@ -12,7 +12,7 @@ namespace SESM
 	public class Config
 	{
 		private static string cfgxml, srvxml;
-		private static XmlDocument cfgDoc = new XmlDocument();
+//		private static XmlDocument cfgDoc = new XmlDocument();
 		private static XmlDocument srvDoc = new XmlDocument();
 
 		public static void Init()
@@ -26,7 +26,7 @@ namespace SESM
 		{
 			try
 			{
-				cfgDoc.Load(cfgxml);
+//				cfgDoc.Load(cfgxml);
 			}
 			catch (FileNotFoundException e)
 			{
