@@ -12,6 +12,7 @@ namespace SESM
 	public class Config
 	{
 		private static string cfgxml, srvxml;
+
 //		private static XmlDocument cfgDoc = new XmlDocument();
 		private static XmlDocument srvDoc = new XmlDocument();
 
@@ -290,7 +291,7 @@ namespace SESM
 		public static XmlNode AddServer(string aservername)
 		{
 			XmlNode srvroot = srvDoc.SelectSingleNode("ServerConfig");
-			XmlElement xe=srvDoc.CreateElement("Server");
+			XmlElement xe = srvDoc.CreateElement("Server");
 			xe.SetAttribute("name", aservername);
 			if (srvroot != null)
 				srvroot.AppendChild(xe);
@@ -322,7 +323,7 @@ namespace SESM
 					}
 				if (!exist)
 				{
-					result= AddServer(servername);
+					result = AddServer(servername);
 				}
 				return result;
 			}
