@@ -189,6 +189,12 @@ namespace SESM
 
 		public static void EditValve(string eservername, string item, string valve)
 		{
+			if (string.IsNullOrEmpty(eservername) ||
+				string.IsNullOrEmpty(item) ||
+				string.IsNullOrEmpty(valve))
+			{
+				return;
+			}
 #if !mB
 			XmlNode servers = srvDoc.DocumentElement;
 
@@ -218,6 +224,7 @@ namespace SESM
 			}
 #else
 			XmlElement xe = (XmlElement) GetSrvNodeByName(eservername);
+
 			if (valve != null)
 			{
 				xe.SetAttribute(item, valve);
@@ -232,7 +239,14 @@ namespace SESM
 
 		public static void EditValve(string eservername, string item)
 		{
+			if (string.IsNullOrEmpty(eservername) ||
+				string.IsNullOrEmpty(item))
+			{
+				return;
+			}
+
 			XmlElement xe = (XmlElement) GetSrvNodeByName(eservername);
+
 			if (item != "name")
 			{
 				xe.RemoveAttribute(item);
