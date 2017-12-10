@@ -43,5 +43,11 @@
     <Compile Include="Console.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\SESM\SESM.csproj">
+      <Project>{6ed84488-54da-48c7-aba1-aa8cdbd0775c}</Project>
+      <Name>SESM</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

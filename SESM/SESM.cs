@@ -139,10 +139,17 @@ namespace SESM
 				return null;
 			}
 #else
-			var xmlAttributeCollection = GetSrvNodeByName(qservername).Attributes;
-			if (xmlAttributeCollection != null)
+			try
+			{
+				XmlAttributeCollection xmlAttributeCollection = GetSrvNodeByName(qservername).Attributes;
 				result = xmlAttributeCollection.GetNamedItem(item).Value;
-			return result;
+				return result;
+			}
+			catch (Exception)
+			{
+
+				return null;
+			}
 #endif
 		}
 
