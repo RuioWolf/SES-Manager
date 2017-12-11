@@ -18,12 +18,19 @@ namespace SESMConsole
 		{
 			while (si == null)
 			{
-				ServerInfoHandler(args);
+				ArgHandler(args);
 			}
-			if (!File.Exists(si.ServerExe))
+			ProcessInit();
+			while (!File.Exists(si.ServerExe))
 			{
-				
+				Update();
 			}
+		}
+
+		static void Update()
+		{
+			steamcmd.Start();
+			steamcmd.WaitForExit();
 		}
 
 		static void ProcessInit()
@@ -33,6 +40,10 @@ namespace SESMConsole
 			srcds.StartInfo.RedirectStandardOutput = true;
 			srcds.StartInfo.StandardOutputEncoding=Encoding.UTF8;
 			srcds.OutputDataReceived += Srcds_OutputDataReceived;
+			steamcmd.StartInfo.FileName = Environment.CurrentDirectory + "\\SteamCMD\\steamcmd.exe";
+			steamcmd.StartInfo.Arguments = si.UpdateArgs;
+			steamcmd.StartInfo.RedirectStandardOutput = true;
+			steamcmd.OutputDataReceived += SteamCMD_OutputDataReceived;
 		}
 
 		static void Srcds_OutputDataReceived(object sender, DataReceivedEventArgs e)
@@ -43,8 +54,17 @@ namespace SESMConsole
 				Console.WriteLine(e.Data);
 			}
 		}
+		static void SteamCMD_OutputDataReceived(object sender, DataReceivedEventArgs e)
+		{
+			if (!string.IsNullOrEmpty(e.Data))
+			{
+				string output = "[SteamCMD]" + e.Data;
+				Logger.Output(output);
+				Console.WriteLine(output);
+			}
+		}
 
-		static void ServerInfoHandler(string[] args)
+		static void ArgHandler(string[] args)
 		{
 			if (args.Length == 0)
 			{
